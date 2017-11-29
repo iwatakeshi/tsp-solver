@@ -5,12 +5,13 @@
 #include <limits>
 #include <vector>
 #include <list>
+#include <stdio.h>
 
 using namespace std;
 
-#define DBL_INF numeric_limits<double>::infinity()
+#define INT_INF numeric_limits<int>::max()
 
-typedef vector<vector<double> > dist_vec;
+typedef vector<vector<int> > dist_vec;
 
 int n; // Number of cities
 size_t nset; // Number of subsets (2^n)
@@ -56,11 +57,21 @@ void build_subsets(dist_vec &subdist, const dist_vec &dist)
 
 			// Find minimum sub-distance for this subtour with j as ending city
 			for (int i = 0; i < n; i++) {
-				if (s & (1 << i) && i != j && subdist[t][i] < DBL_INF) 
-					subdist[s][j] = min(subdist[s][j], subdist[t][i] + dist[i][j]);
+				if (s & (1 << i) && i != j && subdist[t][i] < INT_INF){
+					auto d = subdist[t][i] + dist[i][j];
+					subdist[s][j] = min(subdist[s][j], d);	
+				}
 			}
 		}
 	}
+
+	for (int i = 0; i < subdist.size(); i++) {
+      for (int j = 0; j < subdist[i].size(); j++) {
+        printf("%20d ", subdist[i][j]);
+      }
+      printf("\n");
+    }
+    printf("\n");
 }
 
 // Searches for shortest Hamiltonian cycle
@@ -78,7 +89,7 @@ list<int> min_cycle(dist_vec &subdist, const dist_vec &dist)
 	for (int i = 0; i < n - 1; i++) {
 
 		int best_j;
-		double min_dist = DBL_INF;
+		int min_dist = INT_INF;
 
 		// Find next non-visited city with best sub-distance from
 		// previous city in the cycle
@@ -102,19 +113,35 @@ list<int> min_cycle(dist_vec &subdist, const dist_vec &dist)
 
 int main(int argc, char *argv[])
 {
-	cin >> n;
+
+	srand(time(NULL));
+	n = 4;
 	nset = 1 << n;
 
 	list<int> cycle;
-	double cycle_dist = 0.0;
+	int cycle_dist = 0.0;
 
 	// Distance matrix
-	dist_vec dist(n, vector<double>(n));
+	dist_vec dist(n, vector<int>(n, 0));
 
 	// Subset subdistance
-	dist_vec subdist(nset, vector<double>(n, DBL_INF));
+	dist_vec subdist(nset, vector<int>(n, INT_INF));
 
-	read_dist(dist);
+	for(int i = 0; i < n; i++) {
+		for (int j = i + 1; j < n; j++) {
+			dist[i][j] = rand() % 10 + 1;
+			dist[j][i] = dist[i][j];
+		}
+	}
+
+	for(int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			printf("%2d ", dist[i][j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+
 	build_subsets(subdist, dist);
 	cycle = min_cycle(subdist, dist);
 
@@ -127,7 +154,7 @@ int main(int argc, char *argv[])
 		if (it != cycle.begin())
 			cycle_dist += dist[*it][*prev(it)];
 	}
-	printf("\n%0.2f\n", cycle_dist);
+	printf("\n%d\n", cycle_dist);
 
 
 	return 0;
